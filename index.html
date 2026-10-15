@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0f2a2e">
+<title>Marcación NVR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Tarjeta de reloj marcador: una columna, pasos verticales, botones grandes para uso con una mano en obra */
+:root{
+  --bg:#eef2f1; --card:#ffffff; --ink:#0f2a2e; --muted:#5b6f71; --line:#d3dcdb;
+  --brand:#0f2a2e; --brand-ink:#e9f3f2;
+  --in:#1f7a4d; --in-soft:#e2f2e9; --out:#b4570f; --out-soft:#fbeadc;
+  --ok:#1f7a4d; --warn:#9a6b00; --err:#b3261e; --err-soft:#fbe4e2;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:14px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0b1517; --card:#13221f; --ink:#e6efee; --muted:#9db1b0; --line:#25393a;
+  --brand:#0a1d20; --brand-ink:#d9ecea;
+  --in:#5bc58e; --in-soft:#14301f; --out:#f0a35e; --out-soft:#35230f;
+  --ok:#5bc58e; --warn:#e3b54a; --err:#ff8a80; --err-soft:#3a1714; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);
+  padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+header{background:var(--brand);color:var(--brand-ink);
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px))}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;max-width:560px;margin:0 auto}
+.brand{font-weight:800;letter-spacing:.08em;font-size:.8rem;text-transform:uppercase}
+.brand small{display:block;font-weight:400;letter-spacing:.02em;text-transform:none;opacity:.75;font-size:.78rem}
+.clock{text-align:right;font-family:var(--f-mono)}
+.clock b{display:block;font-size:2rem;line-height:1;font-weight:600;font-variant-numeric:tabular-nums}
+.clock span{font-size:.75rem;opacity:.8}
+main{max-width:560px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));display:grid;gap:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px}
+h2{margin:0;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+h2 .n{font-family:var(--f-mono);background:var(--ink);color:var(--card);border-radius:6px;padding:1px 7px;letter-spacing:0}
+label{font-weight:600;font-size:.9rem;display:grid;gap:6px}
+select,input[type=text],input[type=password]{font:inherit;font-size:1.05rem;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+select:focus,input:focus,button:focus-visible{outline:3px solid color-mix(in srgb,var(--in) 55%,transparent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.tipo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tipo button{font:inherit;font-weight:800;font-size:1.15rem;letter-spacing:.06em;padding:20px 8px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.tipo button[data-t=INGRESO][aria-pressed=true]{background:var(--in);border-color:var(--in);color:#fff}
+.tipo button[data-t=SALIDA][aria-pressed=true]{background:var(--out);border-color:var(--out);color:#fff}
+.tipo button small{display:block;font-weight:400;font-size:.75rem;letter-spacing:0;opacity:.85}
+.status{display:flex;gap:10px;align-items:flex-start;font-size:.92rem}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:5px;flex:none;background:var(--line)}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.err{background:var(--err)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.cam{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:3/4;max-width:100%}
+.cam video,.cam img{width:100%;height:100%;object-fit:cover;display:block}
+.cam video{transform:scaleX(-1)}
+.cam .stamp{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font:600 .78rem var(--f-mono);padding:22px 10px 8px}
+.btn{font:inherit;font-weight:700;font-size:1rem;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;width:100%}
+.btn.primary{background:var(--ink);color:var(--card);border-color:var(--ink);font-size:1.1rem;padding:18px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:.85rem}
+.check input{width:22px;height:22px;flex:none;margin-top:1px}
+details{font-size:.82rem;color:var(--muted)}
+details p{margin:.4em 0}
+.receipt{border:2px dashed var(--line);border-radius:var(--r);padding:16px;display:grid;gap:6px;text-align:center}
+.receipt.in{border-color:var(--in);background:var(--in-soft)}
+.receipt.out{border-color:var(--out);background:var(--out-soft)}
+.receipt .big{font:600 2.2rem var(--f-mono)}
+.receipt .code{font:600 1.05rem var(--f-mono);letter-spacing:.06em}
+.alert{background:var(--err-soft);color:var(--err);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.queue{font-size:.85rem;color:var(--warn)}
+footer{max-width:560px;margin:18px auto 0;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));font-size:.75rem;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">NVR Servicios Generales<small>Control de asistencia · personal fiscalizable</small></div>
+    <div class="clock"><b id="hora">--:--</b><span id="fecha">—</span></div>
+  </div>
+</header>
+
+<main>
+  <section id="paso1" aria-labelledby="t1">
+    <h2 id="t1"><span class="n">1</span> Identifícate</h2>
+    <label for="trab">Trabajador
+      <select id="trab"><option value="">Selecciona tu nombre…</option></select>
+    </label>
+    <div class="row2">
+      <label for="dni">DNI
+        <input id="dni" type="text" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="8 dígitos">
+      </label>
+      <label for="pin">PIN <span class="hint" style="display:inline">(si tienes)</span>
+        <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+      </label>
+    </div>
+  </section>
+
+  <section id="paso2" aria-labelledby="t2">
+    <h2 id="t2"><span class="n">2</span> ¿Qué marcas?</h2>
+    <div class="tipo" role="group" aria-label="Tipo de marcación">
+      <button type="button" id="bIng" data-t="INGRESO" aria-pressed="false">INGRESO<small>Inicio de jornada</small></button>
+      <button type="button" id="bSal" data-t="SALIDA" aria-pressed="false">SALIDA<small>Fin de jornada</small></button>
+    </div>
+  </section>
+
+  <section id="paso3" aria-labelledby="t3">
+    <h2 id="t3"><span class="n">3</span> Ubicación GPS</h2>
+    <div class="status"><span class="dot" id="gpsDot"></span><div><div id="gpsTxt">Esperando permiso de ubicación…</div><div class="hint mono" id="gpsDet"></div></div></div>
+    <button type="button" class="btn" id="gpsBtn">Activar ubicación</button>
+  </section>
+
+  <section id="paso4" aria-labelledby="t4">
+    <h2 id="t4"><span class="n">4</span> Foto de evidencia</h2>
+    <div class="cam" id="camBox" hidden>
+      <video id="video" playsinline muted autoplay></video>
+      <img id="foto" alt="Foto tomada para la marcación" hidden>
+      <div class="stamp" id="stamp"></div>
+    </div>
+    <button type="button" class="btn" id="camBtn">Abrir cámara</button>
+    <button type="button" class="btn" id="shotBtn" hidden>Tomar foto</button>
+    <button type="button" class="btn" id="retakeBtn" hidden>Repetir foto</button>
+    <label class="btn" id="fileLbl" hidden for="fileIn" style="text-align:center">Tomar foto con la cámara del celular
+      <input id="fileIn" type="file" accept="image/*" capture="user" hidden>
+    </label>
+    <p class="hint" id="camHint">La foto debe mostrar tu rostro en el lugar de trabajo. No se aceptan fotos de la galería.</p>
+  </section>
+
+  <section id="paso5" aria-labelledby="t5">
+    <h2 id="t5"><span class="n">5</span> Confirma y envía</h2>
+    <label class="check" for="consent"><input type="checkbox" id="consent"><span>Acepto que NVR registre mi fotografía, ubicación, fecha y hora de esta marcación para el control de asistencia (Ley N.° 29733).</span></label>
+    <details><summary>Leer aviso de privacidad</summary>
+      <p><b>Responsable:</b> NVR Servicios Generales E.I.R.L.</p>
+      <p><b>Datos:</b> nombre, DNI, fotografía, coordenadas GPS con su precisión, fecha y hora, y el tipo de navegador del celular.</p>
+      <p><b>Finalidad:</b> registrar ingresos y salidas, calcular la jornada y sustentar la asistencia ante una fiscalización laboral. No se usan para otro fin.</p>
+      <p><b>Acceso:</b> solo el área de Recursos Humanos y la Administración. Se conservan el tiempo que exige la normativa laboral.</p>
+      <p><b>Tus derechos:</b> puedes pedir acceso, rectificación o cancelación de tus datos a Recursos Humanos.</p>
+    </details>
+    <div class="alert" id="err" hidden></div>
+    <button type="button" class="btn primary" id="sendBtn" disabled>Registrar marcación</button>
+    <p class="queue" id="queueTxt" hidden></p>
+  </section>
+
+  <section id="ok" hidden aria-live="polite">
+    <div class="receipt" id="receipt">
+      <div id="rTipo" style="font-weight:800;letter-spacing:.08em">INGRESO REGISTRADO</div>
+      <div class="big" id="rHora">--:--</div>
+      <div id="rNom"></div>
+      <div class="hint">Código de verificación</div>
+      <div class="code" id="rCod"></div>
+      <p class="hint" id="rNota">Guarda o toma captura de este código. La hora oficial es la del servidor; Recursos Humanos valida la marcación.</p>
+    </div>
+    <button type="button" class="btn" id="newBtn">Nueva marcación</button>
+  </section>
+
+  <section id="cfg" hidden>
+    <h2>Configuración</h2>
+    <p class="hint">Envía una marcación de prueba (sin datos reales) para que Airtable aprenda la estructura del formulario. Hazlo una sola vez, antes de activar la automatización.</p>
+    <button type="button" class="btn" id="testBtn">Enviar marcación de prueba</button>
+    <p class="hint mono" id="testRes"></p>
+  </section>
+</main>
+<footer>Si no tienes señal, la marcación se guarda en el celular y se envía sola al volver la conexión.</footer>
+
+<script>
+/* ==================== CONFIGURACIÓN (editar aquí) ==================== */
+const CONFIG = {
+  WEBHOOK_URL: "https://hooks.airtable.com/workflows/v1/genericWebhook/apppL15wYnCp2ltzD/wfl5VfZSYLc8u9zra/wtrd9vunMywVNaPIP",
+  ZONA: "America/Lima",
+  FOTO_MAX_B64: 62000,          // límite del webhook de Airtable: 100 KB por envío
+  /* Lista autorizada: ID Trabajador (tabla TRABAJADORES) y nombre.
+     Solo personal ACTIVO y fiscalizable. Actualizar cuando haya altas o ceses;
+     de todos modos el servidor vuelve a validar cada marcación. */
+  TRABAJADORES: [
+    [3,  "ALMINAGORDA TITO AQUILES"],
+    [4,  "BAYONA SILUPU CARLOS ENRIQUE"],
+    [9,  "GALARZA HUACASI DIANA NICOLE"],
+    [10, "LOZADA ANTEZANA JUAN CARLOS"],
+    [5,  "RESURRECCION BENITEZ ALAN ORLANDO"],
+    [13, "RUIZ CIEZA ARMANDO"],
+    [2,  "VERA ROUSTON JHIANCARLO MICHELL"]
+  ]
+};
+/* ===================================================================== */
+
+const $ = id => document.getElementById(id);
+const st = { tipo:null, pos:null, gpsErr:"", foto:null, stream:null, enviando:false };
+const QKEY = "nvr_marcaciones_pendientes";
+
+/* Reloj */
+const fH = new Intl.DateTimeFormat("es-PE",{timeZone:CONFIG.ZONA,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+const fD = new Intl.DateTimeFormat("es-PE",{timeZone:CONFIG.ZONA,weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
+function tick(){ const d=new Date(); $("hora").textContent=fH.format(d).slice(0,5); $("fecha").textContent=fD.format(d); if(st.foto==null) $("stamp").textContent=fD.format(d)+" · "+fH.format(d); }
+tick(); setInterval(tick,1000);
+
+/* Trabajadores */
+CONFIG.TRABAJADORES.slice().sort((a,b)=>a[1].localeCompare(b[1])).forEach(([id,n])=>{
+  const o=document.createElement("option"); o.value=id; o.textContent=n; $("trab").appendChild(o);
+});
+try{ const u=JSON.parse(localStorage.getItem("nvr_ultimo")||"null"); if(u){ $("trab").value=u.id; } }catch(e){}
+$("dni").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,8); validar(); });
+$("pin").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,6); });
+$("trab").addEventListener("change",validar);
+$("consent").addEventListener("change",validar);
+
+/* Tipo */
+["bIng","bSal"].forEach(id=>$(id).addEventListener("click",()=>{
+  st.tipo=$(id).dataset.t;
+  $("bIng").setAttribute("aria-pressed",st.tipo==="INGRESO");
+  $("bSal").setAttribute("aria-pressed",st.tipo==="SALIDA");
+  validar();
+}));
+
+/* GPS */
+let watchId=null;
+function gpsUI(cls,txt,det){ $("gpsDot").className="dot "+cls; $("gpsTxt").textContent=txt; $("gpsDet").textContent=det||""; }
+function iniciarGPS(){
+  if(!("geolocation" in navigator)){ st.gpsErr="Navegador sin GPS"; gpsUI("err","Este navegador no permite obtener la ubicación."); return; }
+  gpsUI("warn","Buscando señal GPS…");
+  if(watchId!==null) navigator.geolocation.clearWatch(watchId);
+  watchId=navigator.geolocation.watchPosition(p=>{
+    st.pos=p; st.gpsErr="";
+    const a=Math.round(p.coords.accuracy);
+    gpsUI(a<=50?"ok":"warn", a<=50?"Ubicación lista":"Ubicación con precisión baja, espera unos segundos al aire libre",
+      p.coords.latitude.toFixed(6)+", "+p.coords.longitude.toFixed(6)+" · ±"+a+" m");
+    $("gpsBtn").hidden=true; validar();
+  },err=>{
+    st.gpsErr=["","Permiso denegado","Sin señal","Tiempo agotado"][err.code]||err.message;
+    gpsUI("err", err.code===1?"Debes permitir la ubicación para marcar. Revisa los permisos del navegador.":"No se pudo obtener la ubicación: "+st.gpsErr);
+    $("gpsBtn").hidden=false; $("gpsBtn").textContent="Reintentar ubicación"; validar();
+  },{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+}
+$("gpsBtn").addEventListener("click",iniciarGPS);
+iniciarGPS();
+
+/* Cámara: solo foto en vivo */
+async function abrirCamara(){
+  $("err").hidden=true;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ usarInputArchivo(); return; }
+  try{
+    st.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:960},height:{ideal:1280}},audio:false});
+    $("video").srcObject=st.stream; $("camBox").hidden=false; $("video").hidden=false; $("foto").hidden=true;
+    $("camBtn").hidden=true; $("shotBtn").hidden=false; $("retakeBtn").hidden=true; st.foto=null; validar();
+  }catch(e){ mostrarError("No se pudo abrir la cámara ("+(e.name||e.message)+"). Permite el acceso a la cámara en el navegador."); usarInputArchivo(); }
+}
+function usarInputArchivo(){ $("fileLbl").hidden=false; $("camBtn").hidden=true; $("camHint").textContent="Tu navegador no permite la cámara en vivo: usa el botón para tomar la foto con la cámara del celular."; }
+function detenerCamara(){ if(st.stream){ st.stream.getTracks().forEach(t=>t.stop()); st.stream=null; } }
+function comprimir(fuente,w,h){
+  const max=640, k=Math.min(1,max/Math.max(w,h)); const c=document.createElement("canvas");
+  c.width=Math.round(w*k); c.height=Math.round(h*k); const g=c.getContext("2d");
+  g.drawImage(fuente,0,0,c.width,c.height);
+  const marca=fD.format(new Date())+" "+fH.format(new Date())+" · "+($("trab").selectedOptions[0]?.textContent||"");
+  g.fillStyle="rgba(0,0,0,.55)"; g.fillRect(0,c.height-26,c.width,26); g.fillStyle="#fff"; g.font="600 13px monospace"; g.fillText(marca.slice(0,70),8,c.height-9);
+  let q=0.72, url=c.toDataURL("image/jpeg",q);
+  while(url.length>CONFIG.FOTO_MAX_B64 && q>0.3){ q-=0.08; url=c.toDataURL("image/jpeg",q); }
+  if(url.length>CONFIG.FOTO_MAX_B64){ const c2=document.createElement("canvas"); c2.width=Math.round(c.width*.7); c2.height=Math.round(c.height*.7); c2.getContext("2d").drawImage(c,0,0,c2.width,c2.height); url=c2.toDataURL("image/jpeg",0.6); }
+  return url;
+}
+$("camBtn").addEventListener("click",abrirCamara);
+$("shotBtn").addEventListener("click",()=>{
+  const v=$("video"); if(!v.videoWidth){ mostrarError("La cámara todavía no está lista."); return; }
+  st.foto=comprimir(v,v.videoWidth,v.videoHeight); detenerCamara();
+  $("foto").src=st.foto; $("foto").hidden=false; $("video").hidden=true;
+  $("shotBtn").hidden=true; $("retakeBtn").hidden=false; validar();
+});
+$("retakeBtn").addEventListener("click",abrirCamara);
+$("fileIn").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  if(f.lastModified && Date.now()-f.lastModified>3*60*1000){ mostrarError("La foto no es reciente. Toma una foto nueva en este momento."); e.target.value=""; return; }
+  const img=new Image(); img.onload=()=>{ st.foto=comprimir(img,img.naturalWidth,img.naturalHeight); $("camBox").hidden=false; $("video").hidden=true; $("foto").src=st.foto; $("foto").hidden=false; validar(); URL.revokeObjectURL(img.src); };
+  img.src=URL.createObjectURL(f);
+});
+
+/* Validación del formulario */
+function validar(){
+  const ok = $("trab").value && $("dni").value.length===8 && st.tipo && st.foto && $("consent").checked && !st.enviando;
+  $("sendBtn").disabled=!ok;
+  return ok;
+}
+function mostrarError(t){ $("err").textContent=t; $("err").hidden=false; }
+
+/* Cola sin conexión */
+function leerCola(){ try{ return JSON.parse(localStorage.getItem(QKEY)||"[]"); }catch(e){ return []; } }
+function guardarCola(q){ try{ localStorage.setItem(QKEY,JSON.stringify(q)); }catch(e){} mostrarCola(); }
+function mostrarCola(){ const n=leerCola().length; $("queueTxt").hidden=n===0; $("queueTxt").textContent=n+" marcación(es) guardada(s) en este celular, pendiente(s) de envío."; }
+async function enviar(payload){
+  const body=JSON.stringify(payload);
+  try{
+    const r=await fetch(CONFIG.WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json"},body});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return true;
+  }catch(e){
+    if(!navigator.onLine) throw e;
+    // Si el navegador bloquea la respuesta (CORS), se envía igual sin leer la respuesta.
+    await fetch(CONFIG.WEBHOOK_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body});
+    return true;
+  }
+}
+async function vaciarCola(){
+  const q=leerCola(); if(!q.length||!navigator.onLine) return;
+  const resto=[];
+  for(const p of q){ try{ await enviar(p); }catch(e){ resto.push(p); } }
+  guardarCola(resto);
+}
+window.addEventListener("online",vaciarCola);
+setInterval(vaciarCola,60000); vaciarCola(); mostrarCola();
+
+/* Envío */
+function uuid(){ return (crypto.randomUUID?crypto.randomUUID():([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16))).toUpperCase(); }
+$("sendBtn").addEventListener("click",async()=>{
+  if(!validar()) return;
+  $("err").hidden=true; st.enviando=true; $("sendBtn").disabled=true; $("sendBtn").textContent="Enviando…";
+  const c=st.pos?st.pos.coords:null;
+  const payload={ v:1, codigo:$("trab").value, dni:$("dni").value, pin:$("pin").value, tipo:st.tipo,
+    lat:c?c.latitude:null, lon:c?c.longitude:null, acc:c?c.accuracy:null, gpsError:c?"":(st.gpsErr||"sin señal"),
+    deviceTime:new Date().toISOString(), ua:navigator.userAgent, consent:true, verif:uuid(),
+    fotoMime:"image/jpeg", foto:st.foto.split(",")[1] };
+  let enCola=false;
+  try{ await enviar(payload); }
+  catch(e){ const q=leerCola(); q.push(payload); guardarCola(q); enCola=true; }
+  try{ localStorage.setItem("nvr_ultimo",JSON.stringify({id:$("trab").value})); }catch(e){}
+  const nombre=$("trab").selectedOptions[0].textContent;
+  $("rTipo").textContent=st.tipo+(enCola?" GUARDADO SIN CONEXIÓN":" ENVIADO");
+  $("rHora").textContent=fH.format(new Date()).slice(0,5); $("rNom").textContent=nombre; $("rCod").textContent=payload.verif.slice(0,8);
+  $("rNota").textContent=enCola?"No hay conexión. Se enviará sola cuando vuelva la señal; no marques de nuevo.":"Guarda o toma captura de este código. La hora oficial es la del servidor; Recursos Humanos valida la marcación.";
+  $("receipt").className="receipt "+(st.tipo==="INGRESO"?"in":"out");
+  ["paso1","paso2","paso3","paso4","paso5"].forEach(id=>$(id).hidden=true); $("ok").hidden=false; window.scrollTo(0,0);
+  st.enviando=false; $("sendBtn").textContent="Registrar marcación";
+});
+$("newBtn").addEventListener("click",()=>{
+  st.tipo=null; st.foto=null; $("dni").value=""; $("pin").value=""; $("consent").checked=false;
+  $("bIng").setAttribute("aria-pressed","false"); $("bSal").setAttribute("aria-pressed","false");
+  $("camBox").hidden=true; $("foto").hidden=true; $("camBtn").hidden=false; $("retakeBtn").hidden=true; $("shotBtn").hidden=true;
+  ["paso1","paso2","paso3","paso4","paso5"].forEach(id=>$(id).hidden=false); $("ok").hidden=true; validar();
+});
+
+/* Modo configuración: abrir la página con #configuracion */
+if(location.hash==="#configuracion"){ $("cfg").hidden=false; }
+$("testBtn").addEventListener("click",async()=>{
+  $("testRes").textContent="Enviando…";
+  const muestra={ v:1, codigo:"0", dni:"00000000", pin:"", tipo:"INGRESO", lat:-9.0745, lon:-78.5936, acc:15, gpsError:"",
+    deviceTime:new Date().toISOString(), ua:"PRUEBA DE CONFIGURACION", consent:true, verif:"PRUEBA-"+Date.now(), fotoMime:"image/jpeg", foto:"PRUEBA" };
+  try{ await enviar(muestra); $("testRes").textContent="✓ Prueba enviada "+fH.format(new Date())+". Avisa a quien configura Airtable."; }
+  catch(e){ $("testRes").textContent="✗ No se pudo enviar: "+e.message; }
+});
+validar();
+</script>
+</body>
+</html>
