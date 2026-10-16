@@ -7,10 +7,15 @@
  * 2) GET ?accion=trabajadores: devuelve la lista vigente de trabajadores
  *    ACTIVOS y fiscalizables, leída de la tabla TRABAJADORES de Airtable.
  *    Solo entrega ID y nombre (nunca DNI, PIN ni otros datos).
+ * 3) subirFotosPendientes(): cada minuto (activador de tiempo) busca en
+ *    MARCACIONES las fotos que quedaron en 'Foto Pendiente (base64)', las sube
+ *    al campo 'Foto Evidencia' y vacía el campo pendiente.
  *
  * Configuración: en el editor, Configuración del proyecto (engranaje) →
- * Propiedades de la secuencia de comandos → agregar AIRTABLE_PAT con un token
- * de Airtable que tenga permiso data.records:read sobre la base NVR.
+ * Propiedades de script → agregar AIRTABLE_PAT con un token de Airtable con
+ * permisos data.records:read y data.records:write sobre la base NVR.
+ * Activador: Activadores (reloj) → Añadir activador → función
+ * subirFotosPendientes → Según tiempo → Temporizador por minutos → Cada minuto.
  * Después de cambiar el código: Implementar → Gestionar implementaciones →
  * Editar (lápiz) → Versión: Nueva versión → Implementar.
  */
@@ -27,6 +32,70 @@ const F = {
   cese: 'fldq2SAfO6eJPV7dR'
 };
 const MAX_BYTES = 95000; // límite del webhook de Airtable: 100 KB por envío
+const TABLA_MARCACIONES = 'tblRBocluXIxX6NsL';
+const FM = {
+  id: 'fldXxcdRZLQBKMGtI',
+  foto: 'fldRpNct3x3fp808P',
+  fotoPendiente: 'fldwnqhwZD7lGSrON',
+  sellado: 'fldPCBaG3yQn5gjrG',
+  obs: 'fldgKu3EpnEd9oINL'
+};
+
+/** Sube las fotos de evidencia que quedaron pendientes en MARCACIONES. */
+function subirFotosPendientes() {
+  const pat = PropertiesService.getScriptProperties().getProperty('AIRTABLE_PAT');
+  if (!pat) throw new Error('Falta la propiedad AIRTABLE_PAT');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(1000)) return 'Otra ejecución en curso';
+  try {
+    const formula = encodeURIComponent('LEN({' + FM.fotoPendiente + '})>0');
+    const campos = [FM.id, FM.fotoPendiente, FM.obs].map(f => 'fields%5B%5D=' + f).join('&');
+    const url = 'https://api.airtable.com/v0/' + BASE_ID + '/' + TABLA_MARCACIONES +
+      '?returnFieldsByFieldId=true&pageSize=20&filterByFormula=' + formula + '&' + campos;
+    const res = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + pat }, muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) throw new Error('Airtable respondió ' + res.getResponseCode());
+    const registros = JSON.parse(res.getContentText()).records || [];
+    let subidas = 0;
+    registros.forEach(r => {
+      const f = r.fields || {};
+      const b64 = String(f[FM.fotoPendiente] || '');
+      if (b64.length < 2000) return;
+      const nombre = (f[FM.id] || r.id) + '.jpg';
+      const up = UrlFetchApp.fetch(
+        'https://content.airtable.com/v0/' + BASE_ID + '/' + r.id + '/' + FM.foto + '/uploadAttachment', {
+          method: 'post',
+          contentType: 'application/json',
+          headers: { Authorization: 'Bearer ' + pat },
+          payload: JSON.stringify({ contentType: 'image/jpeg', file: b64, filename: nombre }),
+          muteHttpExceptions: true
+        });
+      if (up.getResponseCode() !== 200) {
+        console.log('No se pudo subir ' + nombre + ': ' + up.getResponseCode() + ' ' + up.getContentText().slice(0, 200));
+        return;
+      }
+      const obs = String(f[FM.obs] || '')
+        .replace(/\n?⚠ Foto en espera:[^\n]*/g, '')
+        .replace(/\n?⚠ Foto no subida aún:[^\n]*/g, '');
+      const campos = {};
+      campos[FM.fotoPendiente] = null;
+      campos[FM.sellado] = new Date().toISOString();
+      campos[FM.obs] = (obs ? obs + '\n' : '') + '📷 Foto de evidencia subida ' +
+        Utilities.formatDate(new Date(), 'America/Lima', 'dd/MM/yyyy HH:mm');
+      UrlFetchApp.fetch('https://api.airtable.com/v0/' + BASE_ID + '/' + TABLA_MARCACIONES + '/' + r.id +
+        '?returnFieldsByFieldId=true', {
+          method: 'patch',
+          contentType: 'application/json',
+          headers: { Authorization: 'Bearer ' + pat },
+          payload: JSON.stringify({ fields: campos }),
+          muteHttpExceptions: true
+        });
+      subidas++;
+    });
+    return 'Fotos subidas: ' + subidas;
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 function doPost(e) {
   const body = e && e.postData ? e.postData.contents : '';
