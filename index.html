@@ -293,7 +293,8 @@ function mostrarCola(){ const n=leerCola().length; $("queueTxt").hidden=n===0; $
 async function enviar(payload){
   if(!/^https:\/\//.test(CONFIG.WEBHOOK_URL)) throw new Error("Falta configurar la dirección de envío");
   // text/plain = "solicitud simple": el navegador no hace verificación previa (CORS) y la envía siempre.
-  const body=JSON.stringify(payload);
+  // enviadoEn permite al servidor medir el retraso (sin señal) con el propio reloj del celular.
+  const body=JSON.stringify(Object.assign({},payload,{enviadoEn:new Date().toISOString()}));
   const opts={method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body,redirect:"follow"};
   try{
     const r=await fetch(CONFIG.WEBHOOK_URL,opts);
