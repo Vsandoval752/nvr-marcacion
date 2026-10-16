@@ -175,9 +175,9 @@ const CONFIG = {
   WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbwSiK2gc5IWkLtMwaJ8ifMstmgmTBY_Y_HvHsjKddBs6jvUF69zrtuPnFmX_Y10Um8CfA/exec",
   ZONA: "America/Lima",
   FOTO_MAX_B64: 62000,          // límite del webhook de Airtable: 100 KB por envío
-  /* Lista autorizada: ID Trabajador (tabla TRABAJADORES) y nombre.
-     Solo personal ACTIVO y fiscalizable. Actualizar cuando haya altas o ceses;
-     de todos modos el servidor vuelve a validar cada marcación. */
+  /* Lista de respaldo: solo se usa si no se puede leer la lista vigente.
+     La lista real se descarga de TRABAJADORES (ACTIVO + fiscalizable + vigente)
+     a través del intermediario al abrir la página. El servidor valida cada marcación. */
   TRABAJADORES: [
     [3,  "ALMINAGORDA TITO AQUILES"],
     [8,  "BAYONA JUARES CARLOS DAVID"],
@@ -203,10 +203,33 @@ const fD = new Intl.DateTimeFormat("es-PE",{timeZone:CONFIG.ZONA,weekday:"long",
 function tick(){ const d=new Date(); $("hora").textContent=fH.format(d).slice(0,5); $("fecha").textContent=fD.format(d); if(st.foto==null) $("stamp").textContent=fD.format(d)+" · "+fH.format(d); }
 tick(); setInterval(tick,1000);
 
-/* Trabajadores */
-CONFIG.TRABAJADORES.slice().sort((a,b)=>a[1].localeCompare(b[1])).forEach(([id,n])=>{
-  const o=document.createElement("option"); o.value=id; o.textContent=n; $("trab").appendChild(o);
-});
+/* Trabajadores: lista vigente desde Airtable (vía intermediario); respaldo local si no hay conexión */
+const LKEY="nvr_lista_trabajadores";
+function pintarLista(lista){
+  const sel=$("trab"), actual=sel.value;
+  sel.querySelectorAll("option:not([value=''])").forEach(o=>o.remove());
+  lista.slice().sort((a,b)=>a[1].localeCompare(b[1])).forEach(([id,n])=>{
+    const o=document.createElement("option"); o.value=id; o.textContent=n; sel.appendChild(o);
+  });
+  if(actual && lista.some(([id])=>String(id)===actual)) sel.value=actual;
+}
+(function(){
+  let lista=CONFIG.TRABAJADORES;
+  try{ const g=JSON.parse(localStorage.getItem(LKEY)||"null"); if(g&&Array.isArray(g)&&g.length) lista=g; }catch(e){}
+  pintarLista(lista);
+})();
+async function actualizarLista(){
+  if(!/^https:\/\//.test(CONFIG.WEBHOOK_URL)) return;
+  try{
+    const r=await fetch(CONFIG.WEBHOOK_URL+"?accion=trabajadores",{redirect:"follow"});
+    const j=await r.json();
+    if(j&&j.ok&&Array.isArray(j.trabajadores)&&j.trabajadores.length){
+      pintarLista(j.trabajadores);
+      try{ localStorage.setItem(LKEY,JSON.stringify(j.trabajadores)); }catch(e){}
+      validar();
+    }
+  }catch(e){ /* sin conexión: se usa la última lista guardada */ }
+}
 try{ const u=JSON.parse(localStorage.getItem("nvr_ultimo")||"null"); if(u){ $("trab").value=u.id; } }catch(e){}
 $("dni").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,8); validar(); });
 $("pin").addEventListener("input",e=>{ e.target.value=e.target.value.replace(/\D/g,"").slice(0,6); });
@@ -361,6 +384,7 @@ $("testBtn").addEventListener("click",async()=>{
   catch(e){ $("testRes").textContent="✗ No se pudo enviar: "+e.message; }
 });
 validar();
+actualizarLista();
 </script>
 </body>
 </html>
